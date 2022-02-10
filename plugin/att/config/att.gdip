@@ -1,0 +1,20 @@
+[config]
+name="ATT"
+binary="att/bin/att.a"
+
+initialization="register_att_types"
+deinitialization="unregister_att_types"
+
+[dependencies]
+linked=[]    
+embedded=[]
+system=[]
+
+capabilities=[]
+
+files=[]
+
+linker_flags=[]
+
+[plist]
+NSUserTrackingUsageDescription="This identifier will be used to deliver personalized ads to you."
