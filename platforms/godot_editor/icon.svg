@@ -1,0 +1,8 @@
+<svg height="128" width="128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="24" fill="#1b1c20"/>
+  <rect x="6" y="6" width="116" height="116" rx="18" fill="none" stroke="#007aff" stroke-width="4"/>
+  <!-- Shield Icon representing Privacy / App Tracking Transparency -->
+  <path d="M 64 28 C 76 36 90 38 98 40 C 98 70 86 88 64 100 C 42 88 30 70 30 40 C 38 38 52 36 64 28 Z" fill="none" stroke="#007aff" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Inner checkmark / tracking dot -->
+  <circle cx="64" cy="62" r="10" fill="#007aff"/>
+</svg>

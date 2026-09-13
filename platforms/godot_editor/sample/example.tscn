@@ -1,0 +1,132 @@
+[gd_scene format=3 uid="uid://c8qy4w37j8flt"]
+
+[ext_resource type="Script" uid="uid://dr0ecci5ko8ko" path="res://sample/example.gd" id="1_example"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_info"]
+bg_color = Color(0.18, 0.2, 0.25, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_log"]
+bg_color = Color(0.08, 0.09, 0.11, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.27, 0.3, 0.38, 0.5)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="Example" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_example")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.13, 0.16, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 120
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="HeaderContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Godot ATT"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.64, 0.69, 1)
+theme_override_font_sizes/font_size = 20
+text = "App Tracking Transparency"
+horizontal_alignment = 1
+
+[node name="InfoPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_info")
+
+[node name="InfoMargin" type="MarginContainer" parent="MarginContainer/VBoxContainer/InfoPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer/InfoPanel/InfoMargin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.91, 0.95, 1)
+theme_override_font_sizes/font_size = 18
+text = "Notice: To make the ATT dialog appear a second time on iOS, uninstall and reinstall the app on your test device."
+autowrap_mode = 2
+
+[node name="LogPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_log")
+
+[node name="LogMargin" type="MarginContainer" parent="MarginContainer/VBoxContainer/LogPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Output" type="RichTextLabel" parent="MarginContainer/VBoxContainer/LogPanel/LogMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+scroll_following = true
+
+[node name="ActionsContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="RequestTrackingAuthorization" type="Button" parent="MarginContainer/VBoxContainer/ActionsContainer"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Request Tracking Authorization"
+
+[node name="GetTrackingAuthorizationStatus" type="Button" parent="MarginContainer/VBoxContainer/ActionsContainer"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Get Tracking Authorization Status"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ActionsContainer/RequestTrackingAuthorization" to="." method="_on_request_tracking_authorization_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ActionsContainer/GetTrackingAuthorizationStatus" to="." method="_on_get_tracking_authorization_status_pressed"]
