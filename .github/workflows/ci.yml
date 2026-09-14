@@ -20,6 +20,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Checkout godot-swift-plugin
+        run: |
+          git clone --recurse-submodules https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
+          git -C "$GITHUB_WORKSPACE/../godot-swift-plugin" checkout feature/4-gdextension-migration || true
+
       - name: Run Swift Unit Tests
         run: ./platforms/ios/scripts/test_local.sh
 
@@ -31,6 +36,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Checkout godot-swift-plugin
+        run: |
+          git clone --recurse-submodules https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
+          git -C "$GITHUB_WORKSPACE/../godot-swift-plugin" checkout feature/4-gdextension-migration || true
 
       - name: Build XCFramework
         run: ./scripts/build_local.sh --clean
