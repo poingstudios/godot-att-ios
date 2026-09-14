@@ -36,12 +36,8 @@ public final class PoingGodotATT: GodotPlugin {
     }
 
     public func request_tracking_authorization() {
-        DispatchQueue.main.async {
-            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-                DispatchQueue.main.async {
-                    self?.emitSignal(Self.signalRequestComplete, args: [Int(status.rawValue)])
-                }
-            }
+        ATTrackingManager.requestTrackingAuthorization { [weak self] status in
+            self?.emitSignal(Self.signalRequestComplete, args: [Int(status.rawValue)])
         }
     }
 
