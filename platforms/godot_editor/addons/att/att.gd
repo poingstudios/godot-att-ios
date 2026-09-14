@@ -81,7 +81,9 @@ static func request_tracking_authorization(
 		else:
 			push_warning("[ATT] Native plugin 'ATT' is only supported on iOS.")
 
-		_dispatcher.request_tracking_authorization_complete.emit.call_deferred(Status.NOT_DETERMINED)
+		_dispatcher.request_tracking_authorization_complete.emit.call_deferred(
+			Status.NOT_DETERMINED
+		)
 		if on_complete.is_valid():
 			on_complete.call_deferred(Status.NOT_DETERMINED)
 

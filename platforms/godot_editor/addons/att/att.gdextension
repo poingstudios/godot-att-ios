@@ -1,6 +1,7 @@
 [configuration]
 entry_symbol = "godot_swift_extension_init"
-compatibility_minimum = "4.2"
+compatibility_minimum = "4.6"
+include_tags = ["ios"]
 
 [libraries]
 ios.debug = "res://addons/att/ios/bin/GodotATTPlugin.xcframework"

@@ -11,7 +11,7 @@ AI assistant context for the godot-att-ios repository. Read this before making c
 - **Supported Platform:** iOS 14.0+
 - **Primary Language:** Swift 5.9+ (Native Plugin) & GDScript (Godot Editor / Addon)
 - **Framework Dependency:** `GodotSwiftPlugin`
-- **Engine Support:** Godot 4.x
+- **Engine Support:** Godot 4.6+ (iOS GDExtension & arm64 Simulator baseline)
 
 ---
 
@@ -30,7 +30,7 @@ godot-att-ios/
 │   │   │       └── GodotATTPluginTests.swift # Framework unit tests
 │   │   └── scripts/
 │   │       └── test_local.sh # Local test execution script
-│   └── godot_editor/        # Godot 4.x testbed project & addon
+│   └── godot_editor/        # Godot 4.6+ testbed project & addon
 │       ├── project.godot
 │       ├── sample/
 │       │   ├── example.gd   # Interactive sample script
@@ -40,8 +40,9 @@ godot-att-ios/
 │               ├── plugin.cfg # Addon metadata
 │               ├── plugin.gd  # EditorPlugin entry point
 │               ├── att.gd     # Public singleton API (Status enum, requests)
+│               ├── att.gdextension # GDExtension manifest
 │               └── internal/  # Internal scripts (no class_name, preload only)
-│                   └── export_plugin.gd # iOS export plugin (framework & plist)
+│                   └── export_plugin.gd # iOS export plugin (framework, plist, linker flags)
 └── AGENTS.md
 ```
 
@@ -53,7 +54,8 @@ godot-att-ios/
 | :--- | :--- |
 | `platforms/ios/Sources/GodotATTPlugin/GodotATTPlugin.swift` | Implements `GodotPlugin` protocol, calls `ATTrackingManager`, emits `request_tracking_authorization_complete` |
 | `platforms/godot_editor/addons/att/att.gd` | Static public API (`class_name ATT`) wrapping `Engine.get_singleton("ATT")` with `Status` enum |
-| `platforms/godot_editor/addons/att/internal/export_plugin.gd` | Configures `AppTrackingTransparency.framework`, `NSUserTrackingUsageDescription`, and embedded C++ init hooks |
+| `platforms/godot_editor/addons/att/att.gdextension` | GDExtension manifest mapping iOS binaries (`entry_symbol = godot_swift_extension_init`) |
+| `platforms/godot_editor/addons/att/internal/export_plugin.gd` | Configures `AppTrackingTransparency.framework`, `NSUserTrackingUsageDescription`, and `-ObjC` linker flag |
 | `platforms/godot_editor/sample/example.gd` | Sample demonstration UI for testing ATT authorization states |
 
 ---
