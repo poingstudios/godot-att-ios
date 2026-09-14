@@ -20,8 +20,7 @@ jobs:
 
       - name: Checkout godot-swift-plugin
         run: |
-          git clone https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
-          git -C "$GITHUB_WORKSPACE/../godot-swift-plugin" checkout feature/4-gdextension-migration || true
+          git clone --depth 1 https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
 
       - name: Run Swift Unit Tests
         run: ./platforms/ios/scripts/test_local.sh
@@ -35,8 +34,7 @@ jobs:
 
       - name: Checkout godot-swift-plugin
         run: |
-          git clone https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
-          git -C "$GITHUB_WORKSPACE/../godot-swift-plugin" checkout feature/4-gdextension-migration || true
+          git clone --depth 1 https://github.com/poingstudios/godot-swift-plugin.git "$GITHUB_WORKSPACE/../godot-swift-plugin"
 
       - name: Build XCFramework
         run: ./scripts/build_local.sh --clean
