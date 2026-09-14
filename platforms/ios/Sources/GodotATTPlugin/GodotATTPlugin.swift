@@ -24,24 +24,19 @@ import AppTrackingTransparency
 import Foundation
 import GodotSwiftPlugin
 
-@objc(PoingGodotATT)
-@objcMembers
 public final class PoingGodotATT: GodotPlugin {
     public override class var pluginName: String { "ATT" }
 
-    public static let signalRequestComplete = "request_tracking_authorization_complete"
+    @Signal
+    public var requestTrackingAuthorizationComplete
 
-    public override var pluginSignals: [String] {
-        [Self.signalRequestComplete]
-    }
-
-    public func request_tracking_authorization() {
+    @objc public func request_tracking_authorization() {
         ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-            self?.emitSignal(Self.signalRequestComplete, args: [Int(status.rawValue)])
+            self?.requestTrackingAuthorizationComplete.emit(Int(status.rawValue))
         }
     }
 
-    public func get_tracking_authorization_status() -> Int {
+    @objc public func get_tracking_authorization_status() -> Int {
         return Int(ATTrackingManager.trackingAuthorizationStatus.rawValue)
     }
 }

@@ -39,6 +39,11 @@ Thumbs.db
 *.log
 .antigravitycli/
 
+# Node & VitePress
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
 # Build artifacts & binaries
 build/
 bin/
