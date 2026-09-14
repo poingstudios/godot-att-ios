@@ -127,17 +127,25 @@ if [ ! -d "${SIM_PRODUCTS_DIR}" ]; then
     exit 1
 fi
 
-DEVICE_LIB="${DEVICE_PRODUCTS_DIR}/libGodotATTPlugin.a"
-SIM_LIB="${SIM_PRODUCTS_DIR}/libGodotATTPlugin.a"
+DEVICE_LIB="${BUILD_DIR}/libGodotATTPlugin-device.a"
+SIM_LIB="${BUILD_DIR}/libGodotATTPlugin-sim.a"
 
-if [ ! -f "${DEVICE_LIB}" ]; then
-    echo -e "${RED}[ERROR] Device static library not found: ${DEVICE_LIB}${NC}" >&2
-    exit 1
+if [ -f "${DEVICE_PRODUCTS_DIR}/libGodotATTPlugin.a" ]; then
+    cp "${DEVICE_PRODUCTS_DIR}/libGodotATTPlugin.a" "${DEVICE_LIB}"
+else
+    libtool -static -o "${DEVICE_LIB}" \
+        "${DEVICE_PRODUCTS_DIR}/GodotATTPlugin.o" \
+        "${DEVICE_PRODUCTS_DIR}/GodotSwiftPlugin.o" \
+        "${DEVICE_PRODUCTS_DIR}/CGDExtensionInterface.o"
 fi
 
-if [ ! -f "${SIM_LIB}" ]; then
-    echo -e "${RED}[ERROR] Simulator static library not found: ${SIM_LIB}${NC}" >&2
-    exit 1
+if [ -f "${SIM_PRODUCTS_DIR}/libGodotATTPlugin.a" ]; then
+    cp "${SIM_PRODUCTS_DIR}/libGodotATTPlugin.a" "${SIM_LIB}"
+else
+    libtool -static -o "${SIM_LIB}" \
+        "${SIM_PRODUCTS_DIR}/GodotATTPlugin.o" \
+        "${SIM_PRODUCTS_DIR}/GodotSwiftPlugin.o" \
+        "${SIM_PRODUCTS_DIR}/CGDExtensionInterface.o"
 fi
 
 # 4. Create XCFramework
