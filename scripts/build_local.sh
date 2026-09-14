@@ -48,32 +48,28 @@ ADDON_DIR="${ROOT_DIR}/platforms/godot_editor/addons/att"
 BIN_DIR="${ADDON_DIR}/ios/bin"
 
 show_help() {
-    echo "Usage: ./scripts/build_local.sh [ios] [--clean]"
+    echo "Usage: ./scripts/build_local.sh [--clean]"
     echo ""
     echo "Options:"
-    echo "  ios       Build GodotATTPlugin.xcframework for iOS (device + simulator)"
     echo "  --clean   Remove build caches before compiling"
     echo "  --help    Show this help message"
 }
 
-TARGET_PLATFORM="${1:-ios}"
-if [ "${TARGET_PLATFORM}" == "--help" ] || [ "${TARGET_PLATFORM}" == "-h" ]; then
-    show_help
-    exit 0
-fi
+CLEAN=false
+for arg in "$@"; do
+    if [ "${arg}" == "--help" ] || [ "${arg}" == "-h" ]; then
+        show_help
+        exit 0
+    elif [ "${arg}" == "--clean" ]; then
+        CLEAN=true
+    fi
+done
 
 # Validate toolchain prerequisites
 for tool in xcodebuild libtool xcrun; do
     if ! command -v "${tool}" &> /dev/null; then
         echo -e "${RED}[ERROR] Required tool '${tool}' is not installed or not in PATH.${NC}" >&2
         exit 1
-    fi
-done
-
-CLEAN=false
-for arg in "$@"; do
-    if [ "$arg" == "--clean" ]; then
-        CLEAN=true
     fi
 done
 
