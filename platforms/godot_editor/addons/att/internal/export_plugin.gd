@@ -24,7 +24,6 @@ extends EditorExportPlugin
 
 const PLUGIN_NAME := "ATT"
 const USAGE_DESCRIPTION := "This identifier will be used to deliver personalized ads to you."
-const XCFRAMEWORK_PATH := "res://addons/att/ios/bin/GodotATTPlugin.xcframework"
 
 
 func _get_name() -> String:
@@ -44,20 +43,18 @@ func _export_begin(
 	if not features.has("ios"):
 		return
 
-	_add_plugin_framework()
 	_add_framework("AppTrackingTransparency.framework")
 	_add_plist_content(
 		"<key>NSUserTrackingUsageDescription</key><string>%s</string>\n" % USAGE_DESCRIPTION
 	)
-	_add_bridge_cpp_code()
+	_add_linker_flags("-ObjC")
 
 
-func _add_plugin_framework() -> void:
-	var global_xcframework_path := ProjectSettings.globalize_path(XCFRAMEWORK_PATH)
-	if DirAccess.dir_exists_absolute(global_xcframework_path):
-		_add_framework(global_xcframework_path)
-	elif FileAccess.file_exists(global_xcframework_path):
-		_add_framework(global_xcframework_path)
+func _add_linker_flags(flags: String) -> void:
+	if has_method("add_apple_embedded_platform_linker_flags"):
+		call("add_apple_embedded_platform_linker_flags", flags)
+	elif has_method("add_ios_linker_flags"):
+		call("add_ios_linker_flags", flags)
 
 
 func _add_framework(framework_name: String) -> void:
@@ -73,36 +70,3 @@ func _add_plist_content(content: String) -> void:
 	elif has_method("add_ios_plist_content"):
 		call("add_ios_plist_content", content)
 
-
-func _add_bridge_cpp_code() -> void:
-	var code := """
-extern "C" void godot_att_initialize();
-extern "C" void godot_att_deinitialize();
-extern void godot_swift_initialize_embedded_plugins();
-extern void godot_swift_deinitialize_embedded_plugins();
-
-void godot_apple_embedded_plugins_initialize() {
-	godot_att_initialize();
-	godot_swift_initialize_embedded_plugins();
-	extern void godot_apple_embedded_plugins_initialize_att();
-	godot_apple_embedded_plugins_initialize_att();
-}
-
-void godot_apple_embedded_plugins_deinitialize() {
-	godot_att_deinitialize();
-	godot_swift_deinitialize_embedded_plugins();
-	extern void godot_apple_embedded_plugins_deinitialize_att();
-	godot_apple_embedded_plugins_deinitialize_att();
-}
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#define godot_apple_embedded_plugins_initialize godot_apple_embedded_plugins_initialize_att
-#define godot_apple_embedded_plugins_deinitialize godot_apple_embedded_plugins_deinitialize_att
-#pragma clang diagnostic pop
-"""
-
-	if has_method("add_apple_embedded_platform_cpp_code"):
-		call("add_apple_embedded_platform_cpp_code", code)
-	elif has_method("add_ios_cpp_code"):
-		call("add_ios_cpp_code", code)

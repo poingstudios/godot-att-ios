@@ -62,7 +62,7 @@ godot-att-ios/
 
 ### Build Static XCFramework
 ```bash
-./scripts/build_local.sh ios
+./scripts/build_local.sh
 ```
 
 ### Run Swift Unit Tests

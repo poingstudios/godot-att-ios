@@ -24,27 +24,18 @@ import AppTrackingTransparency
 import Foundation
 import GodotSwiftPlugin
 
+@objc(PoingGodotATT)
+@objcMembers
 public final class PoingGodotATT: GodotPlugin {
-    public static let pluginName = "ATT"
+    public override class var pluginName: String { "ATT" }
 
     public static let signalRequestComplete = "request_tracking_authorization_complete"
 
-    public init() {}
-
-    public func registerMethods(in registry: GodotPluginRegistry) {
-        registry.registerMethod(pluginName: Self.pluginName, methodName: "requestTrackingAuthorization") { [weak self] _ in
-            self?.requestTrackingAuthorization()
-            return nil
-        }
-
-        registry.registerMethod(pluginName: Self.pluginName, methodName: "getTrackingAuthorizationStatus") { [weak self] _ in
-            return self?.getTrackingAuthorizationStatus() ?? 0
-        }
-
-        registry.registerSignal(pluginName: Self.pluginName, signalName: Self.signalRequestComplete)
+    public override var pluginSignals: [String] {
+        [Self.signalRequestComplete]
     }
 
-    public func requestTrackingAuthorization() {
+    public func request_tracking_authorization() {
         DispatchQueue.main.async {
             ATTrackingManager.requestTrackingAuthorization { [weak self] status in
                 DispatchQueue.main.async {
@@ -54,19 +45,7 @@ public final class PoingGodotATT: GodotPlugin {
         }
     }
 
-    public func getTrackingAuthorizationStatus() -> Int {
+    public func get_tracking_authorization_status() -> Int {
         return Int(ATTrackingManager.trackingAuthorizationStatus.rawValue)
     }
-}
-
-public typealias PGATT = PoingGodotATT
-
-@_cdecl("godot_att_initialize")
-public func godot_att_initialize() {
-    let plugin = PoingGodotATT()
-    GodotPluginRegistry.shared.registerPlugin(plugin)
-}
-
-@_cdecl("godot_att_deinitialize")
-public func godot_att_deinitialize() {
 }

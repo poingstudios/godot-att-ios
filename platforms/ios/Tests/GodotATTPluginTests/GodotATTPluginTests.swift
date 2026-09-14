@@ -47,7 +47,7 @@ final class GodotATTPluginTests: XCTestCase {
     }
 
     func testGetTrackingAuthorizationStatusWithSnakeCase() {
-        let plugin = PGATT()
+        let plugin = PoingGodotATT()
         GodotPluginRegistry.shared.registerPlugin(plugin)
 
         let status = GodotPluginRegistry.shared.callMethod(

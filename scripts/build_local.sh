@@ -23,150 +23,157 @@
 
 set -euo pipefail
 
+# ANSI color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+on_error() {
+    local exit_code="$1"
+    local line_no="$2"
+    echo -e "\n${RED}================================================================${NC}" >&2
+    echo -e "${RED}[ERROR] build_local.sh failed at line ${line_no} (exit code ${exit_code})${NC}" >&2
+    echo -e "${RED}================================================================${NC}\n" >&2
+    exit "${exit_code}"
+}
+trap 'on_error $? $LINENO' ERR
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IOS_DIR="${ROOT_DIR}/platforms/ios"
 BUILD_DIR="${IOS_DIR}/build"
 DERIVED_DATA="${BUILD_DIR}/DerivedData"
 ADDON_DIR="${ROOT_DIR}/platforms/godot_editor/addons/att"
 BIN_DIR="${ADDON_DIR}/ios/bin"
-CORE_PLUGIN_DIR="${ROOT_DIR}/../godot-swift-plugin"
-SWIFT_BRIDGE_LIB_DEVICE="${CORE_PLUGIN_DIR}/Sources/GodotSwiftPlugin/Bridge/lib/libGodotSwiftBridge_device.a"
-SWIFT_BRIDGE_LIB_SIM="${CORE_PLUGIN_DIR}/Sources/GodotSwiftPlugin/Bridge/lib/libGodotSwiftBridge_sim.a"
 
 show_help() {
-    echo "Usage: ./scripts/build_local.sh [ios] [--clean]"
+    echo "Usage: ./scripts/build_local.sh [--clean]"
     echo ""
     echo "Options:"
-    echo "  ios       Build GodotATTPlugin.xcframework for iOS (device + simulator)"
     echo "  --clean   Remove build caches before compiling"
     echo "  --help    Show this help message"
 }
 
-TARGET_PLATFORM="${1:-ios}"
-if [ "${TARGET_PLATFORM}" == "--help" ] || [ "${TARGET_PLATFORM}" == "-h" ]; then
-    show_help
-    exit 0
-fi
-
 CLEAN=false
 for arg in "$@"; do
-    if [ "$arg" == "--clean" ]; then
+    if [ "${arg}" == "--help" ] || [ "${arg}" == "-h" ]; then
+        show_help
+        exit 0
+    elif [ "${arg}" == "--clean" ]; then
         CLEAN=true
     fi
 done
 
+# Validate toolchain prerequisites
+for tool in xcodebuild libtool xcrun; do
+    if ! command -v "${tool}" &> /dev/null; then
+        echo -e "${RED}[ERROR] Required tool '${tool}' is not installed or not in PATH.${NC}" >&2
+        exit 1
+    fi
+done
+
 if [ "$CLEAN" = true ]; then
-    echo "==> Cleaning build directories..."
+    echo -e "${CYAN}==> Cleaning build directories...${NC}"
     rm -rf "${BUILD_DIR}"
     rm -rf "${BIN_DIR}"
 fi
 
-echo "==> Building Godot ATT Plugin (Static XCFramework)..."
+echo -e "${CYAN}==> Building Godot ATT Plugin (GDExtension Static XCFramework)...${NC}"
 mkdir -p "${BUILD_DIR}"
 mkdir -p "${BIN_DIR}"
 
 cd "${IOS_DIR}"
 
 # 1. Build Device Slice (arm64)
-echo ">>> Archiving iOS device slice (arm64)..."
-xcodebuild archive \
-    -scheme GodotATTPlugin \
-    -destination "generic/platform=iOS" \
-    -archivePath "${BUILD_DIR}/ios_device.xcarchive" \
-    -derivedDataPath "${DERIVED_DATA}/device" \
-    SKIP_INSTALL=NO \
-    BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-    -quiet
-
-# 2. Build Simulator Slice (arm64 + x86_64)
-echo ">>> Building iOS simulator slice (universal arm64 + x86_64)..."
+echo -e "${CYAN}>>> [1/5] Building iOS device slice (arm64)...${NC}"
 xcodebuild build \
     -scheme GodotATTPlugin \
+    -configuration Release \
+    -destination "generic/platform=iOS" \
+    -derivedDataPath "${DERIVED_DATA}/device" \
+    SKIP_INSTALL=NO \
+    -quiet
+
+# 2. Build Simulator Slice (universal arm64 + x86_64)
+echo -e "${CYAN}>>> [2/5] Building iOS simulator slice (universal arm64 + x86_64)...${NC}"
+xcodebuild build \
+    -scheme GodotATTPlugin \
+    -configuration Release \
     -destination "generic/platform=iOS Simulator" \
     -derivedDataPath "${DERIVED_DATA}/sim" \
     SKIP_INSTALL=NO \
-    BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
     -quiet
 
-# 3. Assemble Framework Bundles
-echo ">>> Packaging static framework bundles..."
-DEVICE_OBJS_DIR="$(find "${BUILD_DIR}/ios_device.xcarchive/Products" -type d -name "Objects" | head -n 1)"
+# 3. Assemble Static Libraries
+echo -e "${CYAN}>>> [3/5] Packaging static libraries (.a)...${NC}"
+DEVICE_PRODUCTS_DIR="${DERIVED_DATA}/device/Build/Products/Release-iphoneos"
+if [ ! -d "${DEVICE_PRODUCTS_DIR}" ]; then
+    DEVICE_PRODUCTS_DIR="${DERIVED_DATA}/device/Build/Products/Debug-iphoneos"
+fi
+
 SIM_PRODUCTS_DIR="${DERIVED_DATA}/sim/Build/Products/Release-iphonesimulator"
 if [ ! -d "${SIM_PRODUCTS_DIR}" ]; then
     SIM_PRODUCTS_DIR="${DERIVED_DATA}/sim/Build/Products/Debug-iphonesimulator"
 fi
 
-DEVICE_FW="${BUILD_DIR}/frameworks/device/GodotATTPlugin.framework"
-SIM_FW="${BUILD_DIR}/frameworks/sim/GodotATTPlugin.framework"
-
-rm -rf "${BUILD_DIR}/frameworks"
-mkdir -p "${DEVICE_FW}/Modules" "${SIM_FW}/Modules"
-
-# Create static binaries inside framework bundles (including precompiled bridge)
-libtool -static -o "${DEVICE_FW}/GodotATTPlugin" \
-    "${DEVICE_OBJS_DIR}/GodotATTPlugin.o" \
-    "${DEVICE_OBJS_DIR}/GodotSwiftPlugin.o" \
-    "${SWIFT_BRIDGE_LIB_DEVICE}"
-
-libtool -static -o "${SIM_FW}/GodotATTPlugin" \
-    "${SIM_PRODUCTS_DIR}/GodotATTPlugin.o" \
-    "${SIM_PRODUCTS_DIR}/GodotSwiftPlugin.o" \
-    "${SWIFT_BRIDGE_LIB_SIM}"
-
-# Copy Swift module interfaces
-DEVICE_SWIFTMODULE="$(find "${DERIVED_DATA}/device" -type d -name "GodotATTPlugin.swiftmodule" | head -n 1)"
-SIM_SWIFTMODULE="$(find "${DERIVED_DATA}/sim" -type d -name "GodotATTPlugin.swiftmodule" | head -n 1)"
-
-if [ -d "${DEVICE_SWIFTMODULE}" ]; then
-    cp -R "${DEVICE_SWIFTMODULE}" "${DEVICE_FW}/Modules/"
-fi
-if [ -d "${SIM_SWIFTMODULE}" ]; then
-    cp -R "${SIM_SWIFTMODULE}" "${SIM_FW}/Modules/"
+if [ ! -d "${DEVICE_PRODUCTS_DIR}" ]; then
+    echo -e "${RED}[ERROR] Device products directory not found: ${DEVICE_PRODUCTS_DIR}${NC}" >&2
+    exit 1
 fi
 
-# Generate Info.plist for framework bundles
-create_framework_plist() {
-    local target_plist="$1"
-    cat << 'EOF' > "${target_plist}"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleExecutable</key>
-    <string>GodotATTPlugin</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.poingstudios.godotattplugin</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>GodotATTPlugin</string>
-    <key>CFBundlePackageType</key>
-    <string>FMWK</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <key>CFBundleVersion</key>
-    <string>1</string>
-</dict>
-</plist>
-EOF
-}
+if [ ! -d "${SIM_PRODUCTS_DIR}" ]; then
+    echo -e "${RED}[ERROR] Simulator products directory not found: ${SIM_PRODUCTS_DIR}${NC}" >&2
+    exit 1
+fi
 
-create_framework_plist "${DEVICE_FW}/Info.plist"
-create_framework_plist "${SIM_FW}/Info.plist"
+DEVICE_LIB="${BUILD_DIR}/libGodotATTPlugin-device.a"
+SIM_LIB="${BUILD_DIR}/libGodotATTPlugin-sim.a"
+
+# Locate compiled object files
+DEVICE_ATT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
+DEVICE_SWIFT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
+
+if [ -z "${DEVICE_ATT_OBJ}" ] || [ -z "${DEVICE_SWIFT_OBJ}" ]; then
+    echo -e "${RED}[ERROR] Failed to locate device object files (.o) for GodotATTPlugin / GodotSwiftPlugin.${NC}" >&2
+    exit 1
+fi
+
+SIM_ATT_OBJ="$(find "${SIM_PRODUCTS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
+SIM_SWIFT_OBJ="$(find "${SIM_PRODUCTS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
+
+if [ -z "${SIM_ATT_OBJ}" ] || [ -z "${SIM_SWIFT_OBJ}" ]; then
+    echo -e "${RED}[ERROR] Failed to locate simulator object files (.o) for GodotATTPlugin / GodotSwiftPlugin.${NC}" >&2
+    exit 1
+fi
+
+libtool -static -o "${DEVICE_LIB}" \
+    "${DEVICE_ATT_OBJ}" \
+    "${DEVICE_SWIFT_OBJ}"
+
+libtool -static -o "${SIM_LIB}" \
+    "${SIM_ATT_OBJ}" \
+    "${SIM_SWIFT_OBJ}"
 
 # 4. Create XCFramework
-echo ">>> Assembling XCFramework..."
+echo -e "${CYAN}>>> [4/5] Assembling XCFramework...${NC}"
 rm -rf "${BUILD_DIR}/GodotATTPlugin.xcframework"
 xcodebuild -create-xcframework \
-    -framework "${DEVICE_FW}" \
-    -framework "${SIM_FW}" \
+    -library "${DEVICE_LIB}" \
+    -library "${SIM_LIB}" \
     -output "${BUILD_DIR}/GodotATTPlugin.xcframework"
 
 # 5. Copy XCFramework into Addon distribution folder
-echo ">>> Deploying XCFramework to ${BIN_DIR}..."
+echo -e "${CYAN}>>> [5/5] Deploying XCFramework to ${BIN_DIR}...${NC}"
 rm -rf "${BIN_DIR}/GodotATTPlugin.xcframework"
 cp -R "${BUILD_DIR}/GodotATTPlugin.xcframework" "${BIN_DIR}/GodotATTPlugin.xcframework"
 
-echo "==> Build complete! Output ready at: ${BIN_DIR}/GodotATTPlugin.xcframework"
+if [ ! -d "${BIN_DIR}/GodotATTPlugin.xcframework" ]; then
+    echo -e "${RED}[ERROR] Output XCFramework was not found at ${BIN_DIR}/GodotATTPlugin.xcframework!${NC}" >&2
+    exit 1
+fi
+
+echo -e "\n${GREEN}================================================================${NC}"
+echo -e "${GREEN}==> Build complete! Output ready at:${NC}"
+echo -e "${GREEN}    ${BIN_DIR}/GodotATTPlugin.xcframework${NC}"
+echo -e "${GREEN}================================================================${NC}\n"
