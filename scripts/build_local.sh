@@ -127,33 +127,18 @@ if [ ! -d "${SIM_PRODUCTS_DIR}" ]; then
     exit 1
 fi
 
-DEVICE_LIB="${BUILD_DIR}/libGodotATTPlugin-device.a"
-SIM_LIB="${BUILD_DIR}/libGodotATTPlugin-sim.a"
+DEVICE_LIB="${DEVICE_PRODUCTS_DIR}/libGodotATTPlugin.a"
+SIM_LIB="${SIM_PRODUCTS_DIR}/libGodotATTPlugin.a"
 
-# Locate compiled object files
-DEVICE_ATT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
-DEVICE_SWIFT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
-
-if [ -z "${DEVICE_ATT_OBJ}" ] || [ -z "${DEVICE_SWIFT_OBJ}" ]; then
-    echo -e "${RED}[ERROR] Failed to locate device object files (.o) for GodotATTPlugin / GodotSwiftPlugin.${NC}" >&2
+if [ ! -f "${DEVICE_LIB}" ]; then
+    echo -e "${RED}[ERROR] Device static library not found: ${DEVICE_LIB}${NC}" >&2
     exit 1
 fi
 
-SIM_ATT_OBJ="$(find "${SIM_PRODUCTS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
-SIM_SWIFT_OBJ="$(find "${SIM_PRODUCTS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
-
-if [ -z "${SIM_ATT_OBJ}" ] || [ -z "${SIM_SWIFT_OBJ}" ]; then
-    echo -e "${RED}[ERROR] Failed to locate simulator object files (.o) for GodotATTPlugin / GodotSwiftPlugin.${NC}" >&2
+if [ ! -f "${SIM_LIB}" ]; then
+    echo -e "${RED}[ERROR] Simulator static library not found: ${SIM_LIB}${NC}" >&2
     exit 1
 fi
-
-libtool -static -o "${DEVICE_LIB}" \
-    "${DEVICE_ATT_OBJ}" \
-    "${DEVICE_SWIFT_OBJ}"
-
-libtool -static -o "${SIM_LIB}" \
-    "${SIM_ATT_OBJ}" \
-    "${SIM_SWIFT_OBJ}"
 
 # 4. Create XCFramework
 echo -e "${CYAN}>>> [4/5] Assembling XCFramework...${NC}"

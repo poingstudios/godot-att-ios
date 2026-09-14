@@ -1,0 +1,39 @@
+name: GodotATTPlugin
+options:
+  bundleIdPrefix: com.poingstudios
+  minimumXcodeGenVersion: 2.34.0
+packages:
+  GodotSwiftPlugin:
+    path: ../../../godot-swift-plugin
+
+targets:
+  GodotATTPlugin:
+    type: library.static
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources/GodotATTPlugin
+    dependencies:
+      - package: GodotSwiftPlugin
+        product: GodotSwiftPlugin
+      - sdk: AppTrackingTransparency.framework
+    settings:
+      base:
+        PRODUCT_NAME: GodotATTPlugin
+        PRODUCT_MODULE_NAME: GodotATTPlugin
+        SWIFT_VERSION: "5.9"
+        BUILD_LIBRARY_FOR_DISTRIBUTION: YES
+        SKIP_INSTALL: YES
+
+  GodotATTPluginTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/GodotATTPluginTests
+    dependencies:
+      - target: GodotATTPlugin
+    settings:
+      base:
+        PRODUCT_NAME: GodotATTPluginTests
+        SWIFT_VERSION: "5.9"
