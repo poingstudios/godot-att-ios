@@ -1,0 +1,9 @@
+[configuration]
+entry_symbol = "godot_swift_extension_init"
+compatibility_minimum = "4.2"
+
+[libraries]
+ios.debug = "res://addons/att/ios/bin/GodotATTPlugin.xcframework"
+ios.release = "res://addons/att/ios/bin/GodotATTPlugin.xcframework"
+ios.simulator.debug = "res://addons/att/ios/bin/GodotATTPlugin.xcframework"
+ios.simulator.release = "res://addons/att/ios/bin/GodotATTPlugin.xcframework"
