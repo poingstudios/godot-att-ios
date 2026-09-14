@@ -86,36 +86,39 @@ mkdir -p "${BIN_DIR}"
 cd "${IOS_DIR}"
 
 # 1. Build Device Slice (arm64)
-echo -e "${CYAN}>>> [1/5] Archiving iOS device slice (arm64)...${NC}"
-xcodebuild archive \
+echo -e "${CYAN}>>> [1/5] Building iOS device slice (arm64)...${NC}"
+xcodebuild build \
     -scheme GodotATTPlugin \
+    -configuration Release \
     -destination "generic/platform=iOS" \
-    -archivePath "${BUILD_DIR}/ios_device.xcarchive" \
     -derivedDataPath "${DERIVED_DATA}/device" \
     SKIP_INSTALL=NO \
-    BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
     -quiet
 
-# 2. Build Simulator Slice (arm64 + x86_64)
+# 2. Build Simulator Slice (universal arm64 + x86_64)
 echo -e "${CYAN}>>> [2/5] Building iOS simulator slice (universal arm64 + x86_64)...${NC}"
 xcodebuild build \
     -scheme GodotATTPlugin \
+    -configuration Release \
     -destination "generic/platform=iOS Simulator" \
     -derivedDataPath "${DERIVED_DATA}/sim" \
     SKIP_INSTALL=NO \
-    BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
     -quiet
 
 # 3. Assemble Static Libraries
 echo -e "${CYAN}>>> [3/5] Packaging static libraries (.a)...${NC}"
-DEVICE_OBJS_DIR="$(find "${BUILD_DIR}/ios_device.xcarchive/Products" -type d -name "Objects" | head -n 1)"
+DEVICE_PRODUCTS_DIR="${DERIVED_DATA}/device/Build/Products/Release-iphoneos"
+if [ ! -d "${DEVICE_PRODUCTS_DIR}" ]; then
+    DEVICE_PRODUCTS_DIR="${DERIVED_DATA}/device/Build/Products/Debug-iphoneos"
+fi
+
 SIM_PRODUCTS_DIR="${DERIVED_DATA}/sim/Build/Products/Release-iphonesimulator"
 if [ ! -d "${SIM_PRODUCTS_DIR}" ]; then
     SIM_PRODUCTS_DIR="${DERIVED_DATA}/sim/Build/Products/Debug-iphonesimulator"
 fi
 
-if [ -z "${DEVICE_OBJS_DIR}" ] || [ ! -d "${DEVICE_OBJS_DIR}" ]; then
-    echo -e "${RED}[ERROR] Device compilation objects not found in ${BUILD_DIR}/ios_device.xcarchive!${NC}" >&2
+if [ ! -d "${DEVICE_PRODUCTS_DIR}" ]; then
+    echo -e "${RED}[ERROR] Device products directory not found: ${DEVICE_PRODUCTS_DIR}${NC}" >&2
     exit 1
 fi
 
@@ -128,8 +131,8 @@ DEVICE_LIB="${BUILD_DIR}/libGodotATTPlugin-device.a"
 SIM_LIB="${BUILD_DIR}/libGodotATTPlugin-sim.a"
 
 # Locate compiled object files
-DEVICE_ATT_OBJ="$(find "${DEVICE_OBJS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
-DEVICE_SWIFT_OBJ="$(find "${DEVICE_OBJS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
+DEVICE_ATT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotATTPlugin.o" | head -n 1)"
+DEVICE_SWIFT_OBJ="$(find "${DEVICE_PRODUCTS_DIR}" -name "GodotSwiftPlugin.o" | head -n 1)"
 
 if [ -z "${DEVICE_ATT_OBJ}" ] || [ -z "${DEVICE_SWIFT_OBJ}" ]; then
     echo -e "${RED}[ERROR] Failed to locate device object files (.o) for GodotATTPlugin / GodotSwiftPlugin.${NC}" >&2
